@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atur PDF Editor - Gabung, Hapus, Rotasi</title>
+    <title>Atur PDF Editor - Optimized</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     
     <style>
-        .page-card { transition: all 0.3s ease; }
-        .page-card.selected .img-container { border: 4px solid #ef4444; opacity: 0.4; }
-        .ghost { opacity: 0.2; background: #e0f2fe; }
-        .img-container { cursor: grab; background: white; position: relative; border-radius: 12px; overflow: hidden; }
+        .page-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .ghost { opacity: 0.2; background: #e0f2fe; border: 2px dashed #6366f1; }
+        .img-container { cursor: grab; background: white; position: relative; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
         .img-container img { transition: transform 0.3s ease; width: 100%; height: auto; display: block; }
-        /* Animasi saat menghapus */
-        .removing { transform: scale(0); opacity: 0; }
+        .removing { transform: scale(0.5); opacity: 0; }
+        /* Mengatur rasio agar preview seragam */
+        .img-container { aspect-ratio: 1 / 1.4; display: flex; align-items: center; justify-content: center; background: #f8fafc; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen p-4 md:p-8 font-sans">
@@ -25,36 +25,42 @@
         <header class="bg-white p-6 rounded-2xl shadow-sm mb-6 flex flex-wrap justify-between items-center gap-4 border border-slate-200">
             <div>
                 <h1 class="text-2xl font-bold text-slate-800">Atur Halaman PDF</h1>
-                <p class="text-slate-500 text-sm">Klik ikon Tambah PDF untuk menggabungkan file PDF.</p>
+                <p class="text-slate-500 text-sm">Gabung, urutkan, dan rotasi halaman PDF Anda.</p>
             </div>
             <div class="flex gap-2">
                 <input type="file" id="pdf-upload" accept="application/pdf" class="hidden" multiple>
-                <label for="pdf-upload" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold cursor-pointer hover:bg-indigo-700 transition shadow-lg flex items-center gap-2">
+                <label for="pdf-upload" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold cursor-pointer hover:bg-indigo-700 transition shadow-md flex items-center gap-2">
                     <span>➕ Tambah PDF</span>
                 </label>
             </div>
         </header>
 
-        <div id="toolbar" class="hidden sticky top-4 z-50 mb-8 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-slate-200 flex flex-wrap justify-between items-center gap-4">
+        <div id="toolbar" class="hidden sticky top-4 z-50 mb-8 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-slate-200 flex flex-wrap justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <span id="status" class="bg-indigo-600 text-white px-4 py-1.5 rounded-full text-xs font-bold font-mono uppercase tracking-widest">0 Halaman</span>
-                <button onclick="autoFixOrientation()" class="bg-amber-100 text-amber-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-200 transition border border-amber-200">
-                    ✨ Auto-Portrait
+                <span id="status" class="bg-slate-800 text-white px-4 py-1.5 rounded-full text-xs font-bold tracking-widest">0 HALAMAN</span>
+                <div class="h-6 w-px bg-slate-200 mx-2"></div>
+                <button onclick="rotateAll(-90)" class="bg-white border border-slate-300 text-slate-700 px-3 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 transition flex items-center gap-2">
+                    🔄 Semua Ke Kiri
+                </button>
+                <button onclick="rotateAll(90)" class="bg-white border border-slate-300 text-slate-700 px-3 py-2 rounded-lg text-xs font-bold hover:bg-slate-50 transition flex items-center gap-2">
+                    🔄 Semua Ke Kanan
                 </button>
             </div>
 
             <div class="flex items-center gap-2">
-                <button onclick="location.reload()" class="text-xs font-bold text-red-400 hover:text-red-600 px-4">RESET SEMUA</button>
-                <button id="download-btn" class="bg-emerald-600 text-white px-8 py-3 rounded-xl font-black hover:bg-emerald-700 transition shadow-lg uppercase text-sm">
-                    Ekspor PDF
+                <button onclick="location.reload()" class="text-xs font-bold text-slate-400 hover:text-red-500 px-4 transition">RESET</button>
+                <button id="download-btn" class="bg-emerald-600 text-white px-8 py-3 rounded-xl font-black hover:bg-emerald-700 transition shadow-lg uppercase text-sm tracking-tighter">
+                    Ekspor PDF Baru
                 </button>
             </div>
         </div>
 
         <div id="preview-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6"></div>
 
-        <div id="empty-state" class="text-center py-32 border-2 border-dashed border-slate-300 rounded-3xl">
+        <div id="empty-state" class="text-center py-32 border-2 border-dashed border-slate-300 rounded-3xl bg-white/50">
+            <div class="text-5xl mb-4">📄</div>
             <h3 class="text-lg font-bold text-slate-400">Belum ada dokumen yang dimuat.</h3>
+            <p class="text-slate-400 text-sm">Klik tombol Tambah PDF di atas untuk memulai.</p>
         </div>
     </div>
 
@@ -69,7 +75,12 @@
         
         let loadedDocs = []; 
 
-        new Sortable(grid, { animation: 150, ghostClass: 'ghost', onEnd: updateStatus });
+        new Sortable(grid, { 
+            animation: 250, 
+            ghostClass: 'ghost', 
+            onEnd: updateStatus,
+            handle: '.img-container' 
+        });
 
         uploadInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files);
@@ -89,7 +100,7 @@
 
                 for (let i = 1; i <= pdfInstance.numPages; i++) {
                     const page = await pdfInstance.getPage(i);
-                    const viewport = page.getViewport({ scale: 0.5 });
+                    const viewport = page.getViewport({ scale: 0.4 });
                     
                     const canvas = document.createElement('canvas');
                     const context = canvas.getContext('2d');
@@ -101,6 +112,7 @@
                 }
             }
             updateStatus();
+            uploadInput.value = ""; // Clear input agar bisa upload file yang sama
         });
 
         function renderThumbnail(docIndex, pageIndex, imgSrc) {
@@ -111,15 +123,15 @@
             container.setAttribute('data-rotation', 0);
             
             container.innerHTML = `
-                <div class="img-container shadow-md border border-slate-200">
-                    <img src="${imgSrc}">
+                <div class="img-container w-full">
+                    <img src="${imgSrc}" draggable="false">
                 </div>
-                <div class="mt-3 flex items-center justify-between w-full px-1 gap-1">
+                <div class="mt-2 flex items-center justify-between w-full px-1">
                     <div class="flex gap-1">
-                        <button onclick="rotatePage(this, -90)" class="p-2 bg-slate-100 hover:bg-indigo-100 rounded-lg text-slate-600 transition">↺</button>
-                        <button onclick="rotatePage(this, 90)" class="p-2 bg-slate-100 hover:bg-indigo-100 rounded-lg text-slate-600 transition">↻</button>
+                        <button onclick="rotatePage(this, -90)" class="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 hover:bg-indigo-50 rounded-md text-slate-600 transition shadow-sm">↺</button>
+                        <button onclick="rotatePage(this, 90)" class="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 hover:bg-indigo-50 rounded-md text-slate-600 transition shadow-sm">↻</button>
                     </div>
-                    <button onclick="removePageInstantly(this)" class="p-2 bg-red-50 hover:bg-red-500 hover:text-white rounded-lg text-red-500 transition shadow-sm" title="Hapus dari daftar">
+                    <button onclick="removePageInstantly(this)" class="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 hover:bg-red-500 hover:text-white rounded-md text-red-500 transition shadow-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     </button>
                 </div>
@@ -127,32 +139,33 @@
             grid.appendChild(container);
         }
 
-        // FUNGSI BARU: Hapus halaman dari tampilan
         window.removePageInstantly = (btn) => {
             const card = btn.closest('.page-card');
-            card.classList.add('removing'); // Tambah animasi mengecil
+            card.classList.add('removing');
             setTimeout(() => {
-                card.remove(); // Hapus permanen dari DOM
+                card.remove();
                 updateStatus();
-            }, 300);
+            }, 250);
         };
 
         window.rotatePage = (element, degrees) => {
             const card = element.closest('.page-card');
+            applyRotation(card, degrees);
+        };
+
+        // Fungsi bantu rotasi
+        function applyRotation(card, degrees) {
             const img = card.querySelector('img');
             let currentRot = parseInt(card.getAttribute('data-rotation')) || 0;
             let newRot = (currentRot + degrees + 360) % 360;
             card.setAttribute('data-rotation', newRot);
             img.style.transform = `rotate(${newRot}deg)`;
-        };
+        }
 
-        window.autoFixOrientation = () => {
-            grid.querySelectorAll('.page-card').forEach(card => {
-                const img = card.querySelector('img');
-                if (img.naturalWidth > img.naturalHeight) {
-                    rotatePage(card.querySelector('button'), 90);
-                }
-            });
+        // FUNGSI BARU: Rotasi semua halaman sekaligus
+        window.rotateAll = (degrees) => {
+            const cards = grid.querySelectorAll('.page-card');
+            cards.forEach(card => applyRotation(card, degrees));
         };
 
         function updateStatus() {
@@ -168,24 +181,39 @@
             const mergedPdf = await PDFLib.PDFDocument.create();
             const cards = Array.from(grid.querySelectorAll('.page-card'));
 
-            if (cards.length === 0) return alert("Tidak ada halaman untuk disimpan!");
+            if (cards.length === 0) return alert("Tidak ada halaman untuk diekspor!");
 
-            for (let card of cards) {
-                const dIdx = parseInt(card.getAttribute('data-doc-index'));
-                const pIdx = parseInt(card.getAttribute('data-page-index'));
-                const rot = parseInt(card.getAttribute('data-rotation'));
+            const btn = document.getElementById('download-btn');
+            btn.innerText = "⏳ Memproses...";
+            btn.disabled = true;
 
-                const [copiedPage] = await mergedPdf.copyPages(loadedDocs[dIdx].doc, [pIdx]);
-                copiedPage.setRotation(PDFLib.degrees(rot));
-                mergedPdf.addPage(copiedPage);
+            try {
+                for (let card of cards) {
+                    const dIdx = parseInt(card.getAttribute('data-doc-index'));
+                    const pIdx = parseInt(card.getAttribute('data-page-index'));
+                    const rot = parseInt(card.getAttribute('data-rotation'));
+
+                    const [copiedPage] = await mergedPdf.copyPages(loadedDocs[dIdx].doc, [pIdx]);
+                    
+                    // Ambil rotasi asli halaman jika ada, lalu tambahkan rotasi baru
+                    const currentRotation = copiedPage.getRotation().angle;
+                    copiedPage.setRotation(PDFLib.degrees(currentRotation + rot));
+                    
+                    mergedPdf.addPage(copiedPage);
+                }
+
+                const pdfBytes = await mergedPdf.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `Optimized_PDF_${Date.now()}.pdf`;
+                link.click();
+            } catch (err) {
+                alert("Gagal mengekspor PDF: " + err.message);
+            } finally {
+                btn.innerText = "Ekspor PDF Baru";
+                btn.disabled = false;
             }
-
-            const pdfBytes = await mergedPdf.save();
-            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = "Hasil_Edit_Baru.pdf";
-            link.click();
         };
     </script>
 </body>
