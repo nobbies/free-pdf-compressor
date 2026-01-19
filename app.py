@@ -10,8 +10,8 @@ st.write("Optimasi tingkat tinggi dengan kompresi gambar dan pembersihan objek."
 
 # Pengaturan di Sidebar
 st.sidebar.header("Parameter Optimasi")
-quality = st.sidebar.slider("Kualitas Gambar (1-100)", 10, 100, 40)
-zoom = st.sidebar.slider("Skala Resolusi (0.5 - 1.0)", 0.5, 1.0, 0.7)
+quality = st.sidebar.slider("Kualitas Gambar (1-100)", 10, 100, 75)
+zoom = st.sidebar.slider("Skala Resolusi (0.5 - 1.0)", 0.5, 1.0, 0.85)
 
 uploaded_file = st.file_uploader("Unggah PDF", type="pdf")
 
@@ -66,4 +66,5 @@ if uploaded_file:
 
 st.sidebar.markdown("---")
 st.sidebar.caption("© 2024 Optimus PDF v1.0")
+
 st.sidebar.info("Developed by Karma")
